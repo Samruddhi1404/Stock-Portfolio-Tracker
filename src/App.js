@@ -1,79 +1,62 @@
-import React, { useState, useEffect } from "react";
-import Portfolio from "./components/PortFolio";
-import AddStock from "./components/AddStock";
+import React, { useState } from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  useNavigate,
+} from "react-router-dom";
+import StockDetails from "./StockDetails";
+import PortfolioOverview from "./PortfolioOverview";
 import "./App.css";
 
-const App = () => {
-  const [portfolio, setPortfolio] = useState([]);
-  const [user, setUser] = useState(null);
-  const [username, setUsername] = useState("");
+function App() {
+  const [stocks, setStocks] = useState([
+    { name: "Hindustan Unilever Ltd", symbol: "HINDUNILVR", price: 2271 },
+    { name: "GOLDBEES", symbol: "INFY", price: 1630 },
+  ]);
 
-  // Load user & portfolio from localStorage on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem("user");
-    const savedPortfolio = JSON.parse(localStorage.getItem("portfolio")) || [];
-    if (savedUser) setUser(savedUser);
-    setPortfolio(savedPortfolio);
-  }, []);
+  const navigate = useNavigate();
 
-  // Save portfolio & user to localStorage when changed
-  useEffect(() => {
-    if (user) {
-      localStorage.setItem("user", user);
-      localStorage.setItem("portfolio", JSON.stringify(portfolio));
-    }
-  }, [user, portfolio]);
-
-  // Handle login
-  const handleLogin = () => {
-    if (username.trim() !== "") {
-      setUser(username);
-      setUsername("");
-    }
-  };
-
-  // Handle logout
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("portfolio");
-  };
-
-  // Add stock to portfolio
-  const addStock = (stock) => {
-    setPortfolio([...portfolio, stock]);
-  };
-
-  // Remove stock from portfolio
-  const removeStock = (symbol) => {
-    setPortfolio(portfolio.filter((stock) => stock.symbol !== symbol));
+  const openStockDetails = (stock) => {
+    navigate("/details", { state: { stock } });
   };
 
   return (
     <div className="App">
-      <header className="App-header">
-        {!user ? (
-          <div>
-            <h2>Login</h2>
-            <input
-              type="text"
-              placeholder="Enter username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-            <button onClick={handleLogin}>Login</button>
-          </div>
-        ) : (
-          <>
-            <h1>Welcome, {user}!</h1>
-            <button onClick={handleLogout}>Logout</button>
-            <AddStock addStock={addStock} />
-            <Portfolio portfolio={portfolio} removeStock={removeStock} />
-          </>
-        )}
-      </header>
+      <h1>My Portfolio</h1>
+      <button className="overview-btn" onClick={() => navigate("/overview")}>
+        View Portfolio Overview
+      </button>
+
+      {stocks.map((stock, index) => (
+        <div key={index} className="stock-card">
+          <h3>
+            {stock.name} ({stock.symbol}) - ₹{stock.price.toFixed(2)}
+          </h3>
+
+          <button onClick={() => openStockDetails(stock)}>View Details</button>
+        </div>
+      ))}
     </div>
   );
-};
+}
 
-export default App;
+export default function AppWrapper() {
+  const [stocks] = useState([
+    { name: "Hindustan Unilever Ltd", symbol: "HINDUNILVR", price: 2271 },
+    { name: "GOLDBEES", symbol: "INFY", price: 1630 },
+  ]);
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/details" element={<StockDetails />} />
+        <Route
+          path="/overview"
+          element={<PortfolioOverview stocks={stocks} />}
+        />
+      </Routes>
+    </Router>
+  );
+}
